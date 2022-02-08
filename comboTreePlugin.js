@@ -184,7 +184,7 @@
     this._elemItemsTitle.on('click', function(e){
       e.stopPropagation();
       if (_this.options.isMultiple){
-      	_this.multiItemClick(this);
+      	_this.multiItemClick(this, _this.options.isALLClicked);
       	// 2022.02 pms - start
       	if (_this._selectedItem.id==='ALL' || _this._selectedItem.title==='ALL'){
       		_this.options.isALLClicked = !_this.options.isALLClicked; //FIXME if check 되있는 상태면 Click 하지 않게.
@@ -241,7 +241,7 @@
           _this.dropDownInputKeyToggleTreeControl(e.keyCode - 38);
           break;
         case 13:
-          _this.multiItemClick(_this._elemHoveredItem);
+          _this.multiItemClick(_this._elemHoveredItem, false);
           e.preventDefault();
           break;
         default:
@@ -265,7 +265,7 @@
           break;
         case 13:
           if (_this.options.isMultiple)
-            _this.multiItemClick(_this._elemHoveredItem);
+            _this.multiItemClick(_this._elemHoveredItem, false);
           else
             _this.singleItemClick(_this._elemHoveredItem);
           e.preventDefault();
