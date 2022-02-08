@@ -18,6 +18,7 @@
       selected: [],
       collapse: false,
       selectableLastNode: false
+      isALLClicked: false, // 2022.02 pms
     };
 
   // LIFE CYCLE
@@ -115,6 +116,13 @@
 
   ComboTree.prototype.createSourceSubItemsHTML = function (subItems, parentId, collapse=false) {
     var subItemsHtml = '<UL id="' + this.comboTreeId + 'ComboTreeSourceUl' + (parentId ? parentId : 'main' ) + '" style="' + (((this.options.collapse||collapse) && parentId) ? 'display:none;' : '')  + '">';
+    
+    // 2022.02 pms - start
+  	var items_ALL = {};
+  	items_ALL.id='ALL'; items_ALL.title='ALL';
+  	subItemsHtml += this.createSourceItemHTML(items_ALL);
+  	// 2022.02 pms - end
+  	
     for (var i=0; i<subItems.length; i++){
       subItemsHtml += this.createSourceItemHTML(subItems[i]);
     }
@@ -175,8 +183,18 @@
     });
     this._elemItemsTitle.on('click', function(e){
       e.stopPropagation();
-      if (_this.options.isMultiple)
-        _this.multiItemClick(this);
+      if (_this.options.isMultiple){
+      	_this.multiItemClick(this);
+      	// 2022.02 pms - start
+      	if (_this._selectedItem.id==='ALL' || _this._selectedItem.title==='ALL'){
+      		_this.options.isALLClicked = !_this.options.isALLClicked; //FIXME if check 되있는 상태면 Click 하지 않게.
+      		//console.log('isAllClicked - ' + _this.options.isALLClicked);
+      		for(var i=1;i<_this._elemItems.length;i++){
+      			_this.multiItemClick(_this._elemItemsTitle[i], false);
+      		}
+        }
+      	// 2022.02 pms - end
+      }
       else
         _this.singleItemClick(this);
     });
@@ -342,6 +360,38 @@
       } // if check
     } // if selectable
   };
+  
+  //2022.02 pms - start
+	ComboTree.prototype.selectMultipleItemALL=function(ctItem){
+		
+		if (this.options.selectableLastNode && $(ctItem).parent('li').hasClass('ComboTreeItemParent')) {
+
+      this.toggleSelectionTree($(ctItem).parent('li'));
+
+      return false;
+    }
+    
+    if ($(ctItem).data("selectable") == true) {
+			this._selectedItem = {
+	        id: $(ctItem).attr("data-id"),
+	        title: $(ctItem).text()
+	    };
+	    
+	    let check = this.isItemInArray(this._selectedItem, this.options.source);
+			if(check){
+				var index = this.isItemInArray(this._selectedItem, this._selectedItems);
+				if (index && !this.options.isALLClicked){
+		        this._selectedItems.splice(parseInt(index), 1);
+		        $(ctItem).find("input").prop('checked', false);
+		    }
+		    else {
+		        this._selectedItems.push(this._selectedItem);
+		        $(ctItem).find("input").prop('checked', true);
+		    }
+			}
+  	}
+	}
+	//2022.02 pms - end
 
   ComboTree.prototype.singleItemClick = function (ctItem) {
     if ($(ctItem).data("selectable") == true) {
@@ -355,8 +405,12 @@
     this.closeDropDownMenu();
   };
 
-  ComboTree.prototype.multiItemClick = function (ctItem) {
-    this.selectMultipleItem(ctItem);
+  ComboTree.prototype.multiItemClick = function (ctItem, isALL) {
+    //2022.02 pms - start
+  	if(isALL) this.selectMultipleItem(ctItem);
+  	else if(this.options.isALLClicked) this.selectMultipleItemALL(ctItem);
+  	else this.selectMultipleItem(ctItem);
+  	//2022.02 pms - end
 
     if (this.options.cascadeSelect) {
       if ($(ctItem).parent('li').hasClass('ComboTreeItemParent')) {
